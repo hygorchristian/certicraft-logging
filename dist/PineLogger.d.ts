@@ -1,0 +1,38 @@
+import CloudLogger from './CloudLogger';
+import Config from './Config';
+import { InterfaceOf } from './typeGuards/InterfaceOf';
+export default class PinoCloudLogger implements InterfaceOf<CloudLogger> {
+    private config;
+    private timerManager;
+    private stopwatchManager;
+    private logger;
+    private labels;
+    private context;
+    private httpRequest;
+    private enabled;
+    private loggerName;
+    private isProduction;
+    constructor(config: Config);
+    info(obj: any, msg?: string, ...args: any[]): void;
+    error(obj: any, msg?: string, ...args: any[]): void;
+    warn(obj: any, msg?: string, ...args: any[]): void;
+    debug(obj: any, msg?: string, ...args: any[]): void;
+    time(label: string): void;
+    timeLog(label: string, ...args: any[]): void;
+    timeEnd(label: string): void;
+    stopwatchStart(label: string): void;
+    stopwatchStop(label: string): void;
+    stopwatchGetInfo(label: string): void;
+    flush(): void;
+    setLabels(labels: Record<string, any>): void;
+    setContext(context: Record<string, any>): void;
+    setHttpLabels(httpLabels: Record<string, any>): void;
+    setEnabled(enabled: boolean): void;
+    setLoggerName(name: string): void;
+    private serializeMessage;
+    private level;
+    private transporters;
+    private getContext;
+    private updateLogger;
+    private mixin;
+}

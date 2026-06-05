@@ -1,0 +1,33 @@
+import { ServiceContext } from '@google-cloud/logging-bunyan/build/src/types/core';
+import Config from './Config';
+export default class CloudLogger {
+    private config;
+    private timerManager;
+    private stopwatchManager;
+    private loggerName;
+    private labels;
+    private context;
+    private enabled;
+    constructor(config: Config);
+    setLoggerName(name: string): void;
+    setLabels(labels: Record<string, any>): void;
+    setHttpLabels(httpRequest: Record<string, any>): void;
+    setContext(context: ServiceContext): void;
+    setEnabled(enabled: boolean): void;
+    info(msg: any): void;
+    error(msg: any): void;
+    warn(msg: any): void;
+    debug(msg: any): void;
+    time(label: string): void;
+    timeLog(label: string, ...args: any[]): void;
+    timeEnd(label: string): void;
+    stopwatchStart(label: string): void;
+    stopwatchStop(label: string): void;
+    stopwatchGetInfo(label: string): void;
+    flush(): void;
+    private getLogger;
+    private getStreams;
+    private getStdoutStream;
+    private getStreamForLocalTesting;
+    private getStreamForCloudLogging;
+}
