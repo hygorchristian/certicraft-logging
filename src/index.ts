@@ -2,6 +2,8 @@ import CloudLoggerCtor from './CloudLogger';
 import Config from './Config';
 import DeprecatedLog, { isLogLevel } from './Log';
 import PineLogger from './PineLogger';
+import { isLocalEnvironment } from './local/isLocalEnvironment';
+import { PrettyDestination } from './local/PrettyDestination';
 import convertFSAToLogEntryField from './utils/convertFSAToLogEntryField';
 import getRequestAsLogEntryFields from './utils/getRequestAsLogEntryFields';
 
@@ -18,5 +20,7 @@ export {
   CloudLogger, // <-- using Pine logger
   DeprecatedCloudLogger, // <-- this is very hard to maintain
   getRequestAsLogEntryFields,
-  convertFSAToLogEntryField
+  convertFSAToLogEntryField,
+  isLocalEnvironment,
+  PrettyDestination
 };

@@ -36,13 +36,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.convertFSAToLogEntryField = exports.getRequestAsLogEntryFields = exports.DeprecatedCloudLogger = exports.CloudLogger = exports.isLogLevel = exports.DeprecatedLog = exports.Log = void 0;
+exports.PrettyDestination = exports.isLocalEnvironment = exports.convertFSAToLogEntryField = exports.getRequestAsLogEntryFields = exports.DeprecatedCloudLogger = exports.CloudLogger = exports.isLogLevel = exports.DeprecatedLog = exports.Log = void 0;
 const CloudLogger_1 = __importDefault(require("./CloudLogger"));
 const Config_1 = __importDefault(require("./Config"));
 const Log_1 = __importStar(require("./Log"));
 exports.DeprecatedLog = Log_1.default;
 Object.defineProperty(exports, "isLogLevel", { enumerable: true, get: function () { return Log_1.isLogLevel; } });
 const PineLogger_1 = __importDefault(require("./PineLogger"));
+const isLocalEnvironment_1 = require("./local/isLocalEnvironment");
+Object.defineProperty(exports, "isLocalEnvironment", { enumerable: true, get: function () { return isLocalEnvironment_1.isLocalEnvironment; } });
+const PrettyDestination_1 = require("./local/PrettyDestination");
+Object.defineProperty(exports, "PrettyDestination", { enumerable: true, get: function () { return PrettyDestination_1.PrettyDestination; } });
 const convertFSAToLogEntryField_1 = __importDefault(require("./utils/convertFSAToLogEntryField"));
 exports.convertFSAToLogEntryField = convertFSAToLogEntryField_1.default;
 const getRequestAsLogEntryFields_1 = __importDefault(require("./utils/getRequestAsLogEntryFields"));

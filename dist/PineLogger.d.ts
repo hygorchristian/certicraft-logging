@@ -12,6 +12,7 @@ export default class PinoCloudLogger implements InterfaceOf<CloudLogger> {
     private enabled;
     private loggerName;
     private isProduction;
+    private localDestination?;
     constructor(config: Config);
     info(obj: any, msg?: string, ...args: any[]): void;
     error(obj: any, msg?: string, ...args: any[]): void;
@@ -34,5 +35,8 @@ export default class PinoCloudLogger implements InterfaceOf<CloudLogger> {
     private transporters;
     private getContext;
     private updateLogger;
+    private localMixin;
+    private shouldUseLocalPretty;
+    private getLocalDestination;
     private mixin;
 }

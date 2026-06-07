@@ -4,6 +4,9 @@ import CloudLogger from './CloudLogger';
 import Config from './Config';
 import StopwatchManager from './StopwatchManager';
 import TimerManager from './TimerManager';
+import { isLocalEnvironment } from './local/isLocalEnvironment';
+import { PrettyDestination } from './local/PrettyDestination';
+import { silenceNoisyLibraries } from './local/silenceNoisyLibraries';
 import { InterfaceOf } from './typeGuards/InterfaceOf';
 import toPlainJson from './utils/toPlainJson';
 
@@ -18,6 +21,7 @@ export default class PinoCloudLogger implements InterfaceOf<CloudLogger> {
   private enabled: boolean;
   private loggerName: string;
   private isProduction: boolean;
+  private localDestination?: PrettyDestination;
 
   constructor(config: Config) {
     this.config = config;
@@ -28,10 +32,14 @@ export default class PinoCloudLogger implements InterfaceOf<CloudLogger> {
     this.loggerName = '';
     this.isProduction = process?.env?.NODE_ENV === 'production';
 
-    this.updateLogger();
-    this.logger = pino();
+    if (this.shouldUseLocalPretty()) {
+      // Idempotent gRPC/Firestore stdout chatter suppression for local runs.
+      silenceNoisyLibraries();
+    }
+
     this.timerManager = new TimerManager();
     this.stopwatchManager = new StopwatchManager();
+    this.updateLogger();
   }
 
   info(obj: any, msg?: string, ...args: any[]): void {
@@ -126,6 +134,10 @@ export default class PinoCloudLogger implements InterfaceOf<CloudLogger> {
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
+    // Rebuild so the level (silent ↔ info/debug) reflects the new flag —
+    // otherwise the underlying pino keeps the level it was built with at
+    // construction time (when enabled was still false).
+    this.updateLogger();
   }
 
   setLoggerName(name: string): void {
@@ -142,6 +154,10 @@ export default class PinoCloudLogger implements InterfaceOf<CloudLogger> {
   private level = (): pino.Level | 'silent' => {
     if (!this.enabled) return 'silent';
     if (this.config.isTestEnvironment()) return 'silent';
+    if (this.shouldUseLocalPretty()) {
+      const envLevel = process.env.LOG_LEVEL as pino.Level | undefined;
+      return envLevel ?? 'info';
+    }
     if (this.config.isEmulator()) return 'debug';
     if (this.config.isTTY()) return 'info';
     return 'info';
@@ -150,6 +166,9 @@ export default class PinoCloudLogger implements InterfaceOf<CloudLogger> {
   private transporters = (): Partial<LoggerOptions> => {
     if (this.isProduction) return {};
     if (this.config.isTestEnvironment()) return {};
+    // When we own the local pretty rendering via PrettyDestination, don't
+    // also spawn pino-pretty in a worker thread.
+    if (this.shouldUseLocalPretty()) return {};
     return {
       transport: {
         target: 'pino-pretty',
@@ -171,11 +190,57 @@ export default class PinoCloudLogger implements InterfaceOf<CloudLogger> {
   };
 
   private updateLogger = (): void => {
+    if (this.shouldUseLocalPretty()) {
+      // Skip gcpLogOptions locally — we're not shipping to GCP, so the
+      // pino record stays in its native shape (msg/level number/numeric time)
+      // which PrettyDestination knows how to format. The local mixin injects
+      // the same setHttpLabels/setLabels context the prod path uses, so
+      // PrettyDestination can surface method/path/companyId/etc.
+      this.logger = pino(
+        {
+          level: this.level(),
+          mixin: this.localMixin.bind(this)
+        } as LoggerOptions,
+        this.getLocalDestination()
+      );
+      return;
+    }
     const options = gcpLogOptions(
       { level: this.level(), ...this.transporters() } as any,
       this.getContext() as any
     );
     this.logger = pino(options as LoggerOptions);
+  };
+
+  private localMixin(): Record<string, any> {
+    return {
+      ...(Object.keys(this.httpRequest).length
+        ? { httpRequest: this.httpRequest }
+        : {}),
+      ...(Object.keys(this.labels).length ? { labels: this.labels } : {}),
+      ...(this.loggerName ? { loggerName: this.loggerName } : {})
+    };
+  }
+
+  private shouldUseLocalPretty = (): boolean => {
+    if (this.isProduction) return false;
+    if (this.config.isTestEnvironment()) return false;
+    return isLocalEnvironment();
+  };
+
+  private getLocalDestination = (): PrettyDestination => {
+    if (!this.localDestination) {
+      const parseList = (v: string | undefined) =>
+        (v ?? '')
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean);
+      this.localDestination = new PrettyDestination({
+        muteSources: parseList(process.env.LOG_MUTE_SOURCES),
+        silencePatterns: parseList(process.env.LOG_SILENCE_PATTERNS)
+      });
+    }
+    return this.localDestination;
   };
 
   private mixin(): Record<string, any> {
