@@ -1,6 +1,6 @@
 {
   "name": "@certicraft/logging",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "This package is used to log and debug data to Google Cloud Platform",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
