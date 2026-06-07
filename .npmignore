@@ -1,0 +1,6 @@
+# Rules from: /Users/hygordias/dev/certicraft/certicraft-logging/.gitignore
+node_modules
+.env
+tsconfig.tsbuildinfo
+.idea
+_docs
